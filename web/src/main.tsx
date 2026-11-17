@@ -7,14 +7,15 @@ import './styles.css';
 
 const root = createRoot(document.getElementById('root')!);
 
-initFirebase().then(
-  () =>
-    root.render(
-      <StrictMode>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </StrictMode>,
-    ),
-  (error: Error) => root.render(<p className="splash">{error.message}</p>),
-);
+try {
+  initFirebase();
+  root.render(
+    <StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </StrictMode>,
+  );
+} catch (error) {
+  root.render(<p className="splash">{(error as Error).message}</p>);
+}
