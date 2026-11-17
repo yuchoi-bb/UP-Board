@@ -27,9 +27,12 @@ export async function initFirebase(): Promise<void> {
   const app = initializeApp(await loadConfig());
   auth = getAuth(app);
   // 로컬 캐시를 켜 두면 오프라인에서도 마지막으로 본 토픽을 읽을 수 있다.
-  db = initializeFirestore(app, {
-    localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
-  });
+  // up-wishlist 프로젝트를 Supplies와 같이 쓰므로 UP-Board 전용 데이터베이스를 쓴다.
+  db = initializeFirestore(
+    app,
+    { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) },
+    'up-board',
+  );
   if (useEmulators) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     connectFirestoreEmulator(db, '127.0.0.1', 8080);

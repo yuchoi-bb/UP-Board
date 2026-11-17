@@ -2,7 +2,7 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { logger } from 'firebase-functions';
 import { onRequest, type Request } from 'firebase-functions/v2/https';
-import { OWNER_UID, SETUP_CODE } from './config.js';
+import { OWNER_CLAIM, ownerUid, SETUP_CODE } from './config.js';
 import {
   authenticationOptions,
   deletePasskey,
@@ -19,7 +19,22 @@ initializeApp();
 
 type Route = { auth: boolean; handler: (body: Record<string, unknown>) => Promise<unknown> };
 
-const token = () => getAuth().createCustomToken(OWNER_UID);
+/**
+ * 소유자 계정(Supplies의 구글 계정)으로 로그인하는 토큰. 계정이 없으면 새 사용자가 조용히
+ * 생겨 버리므로, 먼저 존재하는지 확인한다.
+ */
+async function token(): Promise<string> {
+  await assertOwnerExists();
+  return getAuth().createCustomToken(ownerUid(), { [OWNER_CLAIM]: true });
+}
+
+async function assertOwnerExists(): Promise<void> {
+  await getAuth()
+    .getUser(ownerUid())
+    .catch(() => {
+      throw new HttpError(500, 'owner_missing', 'OWNER_UID에 해당하는 계정이 없습니다. 배포 설정을 확인하세요.');
+    });
+}
 
 function passkeyName(body: Record<string, unknown>): string {
   return typeof body.name === 'string' && body.name.trim() ? body.name.trim().slice(0, 60) : '패스키';
@@ -38,6 +53,8 @@ const routes: Record<string, Route> = {
       if (await isInitialized()) {
         throw new HttpError(409, 'already_initialized', '이미 설정이 끝난 사이트입니다.');
       }
+      // 설정이 저장된 뒤에 계정 문제를 발견하면 복구 코드만 날아가므로, 시작 전에 확인한다.
+      await assertOwnerExists();
       const expected = SETUP_CODE.value();
       if (!expected) throw new HttpError(500, 'not_configured', 'SETUP_CODE가 설정되지 않았습니다.');
       await assertNotThrottled();
@@ -110,11 +127,12 @@ const routes: Record<string, Route> = {
     auth: true,
     handler: async () => ({ recoveryCodes: await issueRecoveryCodes() }),
   },
-  // 모든 기기의 로그인을 끊는다. 요청한 기기는 새 토큰으로 바로 다시 로그인한다.
+  // 모든 기기의 로그인을 끊는다. 계정을 같이 쓰는 Supplies 앱의 로그인도 함께 끊긴다.
+  // 요청한 기기는 새 토큰으로 바로 다시 로그인한다.
   'POST /api/sessions/revoke': {
     auth: true,
     handler: async () => {
-      await getAuth().revokeRefreshTokens(OWNER_UID);
+      await getAuth().revokeRefreshTokens(ownerUid());
       return { token: await token() };
     },
   },
@@ -128,10 +146,13 @@ async function assertOwner(req: Request): Promise<void> {
     .catch(() => {
       throw new HttpError(401, 'unauthenticated', '로그인이 만료되었습니다. 다시 로그인하세요.');
     });
-  if (decoded.uid !== OWNER_UID) throw new HttpError(403, 'forbidden', '권한이 없습니다.');
+  // 같은 계정이라도 Supplies에서 구글로 로그인한 세션에는 클레임이 없어서 여기서 막힌다.
+  if (decoded.uid !== ownerUid() || decoded[OWNER_CLAIM] !== true) {
+    throw new HttpError(403, 'forbidden', '권한이 없습니다.');
+  }
 }
 
-export const api = onRequest({ region: 'asia-northeast3', secrets: [SETUP_CODE], maxInstances: 3 }, async (req, res) => {
+export const upboardApi = onRequest({ region: 'asia-northeast3', secrets: [SETUP_CODE], maxInstances: 3 }, async (req, res) => {
   res.set('Cache-Control', 'no-store');
   try {
     const route = routes[`${req.method} ${req.path.replace(/\/+$/, '')}`];

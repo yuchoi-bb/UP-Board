@@ -149,7 +149,11 @@ export function Settings() {
             className="danger"
             disabled={busy}
             onClick={() => {
-              if (window.confirm('모든 기기에서 로그아웃할까요? 이 기기는 로그인 상태로 남습니다.')) {
+              if (
+                window.confirm(
+                  '모든 기기에서 로그아웃할까요? 계정을 같이 쓰는 Supplies 앱의 로그인도 모든 기기에서 끊깁니다. 이 기기는 로그인 상태로 남습니다.',
+                )
+              ) {
                 void run(async () => {
                   await revokeAllSessions();
                   return '다른 기기의 로그인을 모두 끊었습니다. 반영까지 최대 1시간 걸릴 수 있습니다.';

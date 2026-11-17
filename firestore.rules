@@ -1,8 +1,11 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // UP-Board 전용 데이터베이스(up-board)의 규칙이다. Supplies가 쓰는 기본 데이터베이스와는 별개.
+    // 클레임은 Functions가 패스키·복구 코드 로그인에만 붙여 준다.
+    // 같은 계정이라도 Supplies에서 구글로 로그인한 세션은 여기에 접근할 수 없다.
     function isOwner() {
-      return request.auth != null && request.auth.uid == 'owner';
+      return request.auth != null && request.auth.token.upboard == true;
     }
 
     match /topics/{topicId} {

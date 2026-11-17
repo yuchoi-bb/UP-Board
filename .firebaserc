@@ -1,0 +1,17 @@
+{
+  "projects": {
+    "default": "up-wishlist"
+  },
+  "targets": {
+    "up-wishlist": {
+      "hosting": {
+        "upboard": ["up-board"]
+      }
+    },
+    "demo-upboard": {
+      "hosting": {
+        "upboard": ["demo-upboard"]
+      }
+    }
+  }
+}

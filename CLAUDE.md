@@ -31,7 +31,13 @@ env -u HTTPS_PROXY -u https_proxy -u GLOBAL_AGENT_HTTPS_PROXY npx firebase emula
 ## 건드리면 안 되는 것
 
 - 패스키는 도메인(rpID)에 묶인다. `RP_ID`나 호스팅 도메인을 바꾸면 등록된 지문이 전부 무효가 된다.
-- 계정은 고정 UID `owner` 하나다. Firestore 규칙과 Functions가 이 값에 의존한다.
+- Firebase 프로젝트 `up-wishlist`를 Supplies 앱과 같이 쓴다. UP-Board 몫은 Hosting 사이트 `up-board`,
+  Firestore 데이터베이스 `up-board`, Functions 코드베이스 `up-board`로 분리돼 있다.
+  `firebase.json`에 기본 데이터베이스를 넣거나 배포 범위(`npm run deploy`의 `--only`)를 넓히면
+  Supplies의 규칙·데이터를 덮어쓸 수 있다.
+- 로그인 사용자는 Supplies의 구글 계정(`OWNER_UID`)과 같다. UP-Board 접근 권한은 UID가 아니라
+  `upboard` 클레임으로 판단한다. 규칙과 API 양쪽에서 이 클레임을 확인해야 한다.
+- 실제 `OWNER_UID`는 `functions/.env.up-wishlist`에만 둔다(커밋하지 않음).
 - `auth/*`, `authCredentials`, `authChallenges`는 클라이언트에 열지 않는다. 규칙에서 전부 막혀 있어야 한다.
 - 토픽의 제목·내용·링크를 바꾸는 코드는 반드시 직전 상태를 `versions`에 남긴다
   (`web/src/topics.ts`의 `saveTopic`). AI 편집을 추가할 때도 같다.

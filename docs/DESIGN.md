@@ -8,13 +8,28 @@
 | 항목 | 결정 |
 | --- | --- |
 | 저장소 | `UP-Board` |
-| 호스팅·백엔드 | Firebase (Hosting, Firestore, Functions, FCM) |
-| 도메인 | Firebase 기본 도메인(`<project>.web.app`)으로 시작 |
+| 호스팅·백엔드 | Firebase 프로젝트 `up-wishlist` (Supplies 앱과 같이 씀) |
+| 도메인 | `up-board.web.app` (같은 프로젝트 안의 별도 Hosting 사이트) |
+| 계정 | Supplies 앱의 구글 계정과 같은 사용자 |
 | 로그인(모바일) | 패스키(WebAuthn) 지문 |
 | 로그인(PC) | FavHub 앱으로 푸시 → 지문 승인 |
 | 콘텐츠 편집 | 사이트 안에서 직접 편집 + Gemini 채팅 |
 
 패스키는 도메인에 묶인다. 나중에 커스텀 도메인으로 옮기면 지문을 1회 다시 등록해야 한다.
+
+### up-wishlist를 같이 쓰는 방식
+
+같은 프로젝트에 있는 Supplies 앱을 깨뜨리지 않도록 UP-Board 몫을 전부 분리한다.
+
+| 자원 | UP-Board | Supplies |
+| --- | --- | --- |
+| Hosting | 사이트 `up-board` | GitHub Pages (Firebase Hosting 안 씀) |
+| Firestore | 데이터베이스 `up-board` (서울) | 기본 데이터베이스 `(default)` |
+| Firestore 규칙 | 이 저장소의 `firestore.rules` | 콘솔에서 관리 |
+| Functions | 코드베이스 `up-board`, 함수 `upboardApi` | 없음 |
+
+배포는 `--only hosting:upboard,functions:up-board,firestore`로 범위를 좁힌다.
+`firebase.json`에는 `up-board` 데이터베이스만 적혀 있으므로 기본 데이터베이스의 규칙은 건드리지 않는다.
 
 ## 토픽
 
@@ -43,7 +58,14 @@ Functions의 Admin SDK로만 다룬다.
 ### 모바일
 
 패스키로 지문 로그인한다. Functions가 WebAuthn 검증을 하고 Firebase 커스텀 토큰을 발급한다.
-계정은 고정 UID `owner` 하나뿐이다.
+
+로그인하면 Supplies 앱에 구글로 로그인하는 계정과 **같은 사용자**(`OWNER_UID`)가 된다.
+그래서 나중에 여행 토픽에서 그 계정의 준비물 데이터(기본 데이터베이스의 `users/{uid}/...`)를 바로 읽을 수 있다.
+
+다만 UP-Board 데이터에 접근하려면 패스키나 복구 코드를 거쳐야 한다. Functions가 그때만 토큰에
+`upboard` 클레임을 붙이고, Firestore 규칙과 API가 이 클레임을 확인한다. 구글 계정 세션만으로는 들어올 수 없다.
+
+같은 사용자를 쓰기 때문에 "모든 기기에서 로그아웃"은 Supplies 앱의 로그인도 함께 끊는다.
 
 첫 패스키 등록은 배포할 때 정한 설정 코드(`SETUP_CODE`)를 알아야만 할 수 있다.
 주소를 먼저 알아낸 남이 사이트를 차지하지 못하게 하기 위한 것으로, 설정이 끝나면 다시 쓸 수 없다.
@@ -105,6 +127,7 @@ Gemini가 토픽을 직접 고치므로, 모든 수정은 되돌릴 수 있어�
 
 ## 시작 전 필요한 것
 
-- Firebase 프로젝트 생성, Blaze(종량제) 요금제 전환
+- `up-wishlist` 프로젝트의 Blaze(종량제) 요금제 확인
+- Hosting 사이트 `up-board` 생성, Supplies 구글 계정의 UID 확인 (README 참고)
 - 배포용 Firebase 자격 증명 (또는 배포는 직접 수행)
 - Gemini API 키 (3단계)

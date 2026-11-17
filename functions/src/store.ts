@@ -1,7 +1,8 @@
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
+import { DATABASE_ID } from './config.js';
 import { HttpError } from './util.js';
 
-export const db = () => getFirestore();
+export const db = () => getFirestore(DATABASE_ID);
 
 export const configRef = () => db().doc('auth/config');
 export const recoveryRef = () => db().doc('auth/recovery');

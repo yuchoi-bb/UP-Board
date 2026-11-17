@@ -13,10 +13,23 @@ const SHOTS = process.env.SHOTS_DIR;
 const SCALE = Number(process.env.SHOTS_SCALE ?? 1);
 if (SHOTS) mkdirSync(SHOTS, { recursive: true });
 
-await fetch('http://127.0.0.1:8080/emulator/v1/projects/demo-upboard/databases/(default)/documents', {
+const PROJECT = 'demo-upboard';
+const DATABASE = 'up-board';
+const OWNER_UID = 'test-owner';
+const AUTH_API = `http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/${PROJECT}`;
+
+await fetch(`http://127.0.0.1:8080/emulator/v1/projects/${PROJECT}/databases/${DATABASE}/documents`, {
   method: 'DELETE',
 });
-await fetch('http://127.0.0.1:9099/emulator/v1/projects/demo-upboard/accounts', { method: 'DELETE' });
+await fetch(`http://127.0.0.1:9099/emulator/v1/projects/${PROJECT}/accounts`, { method: 'DELETE' });
+
+// Supplies 앱에 구글로 가입해 둔 계정 역할. UP-Board는 이 계정으로 로그인한다.
+const createOwner = () =>
+  fetch(`${AUTH_API}/accounts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+    body: JSON.stringify({ localId: OWNER_UID, email: 'owner@example.com', password: 'supplies-login' }),
+  }).then((response) => assert.equal(response.status, 200));
 
 const browser = await chromium.launch();
 const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: SCALE });
@@ -51,6 +64,12 @@ let phone = await addAuthenticator();
 await page.goto(BASE);
 await page.getByText('처음 설정').waitFor();
 await shot('01-setup');
+await page.getByLabel('설정 코드').fill('test-setup-code');
+await page.getByRole('button', { name: '패스키 등록하고 시작' }).click();
+await page.getByText('OWNER_UID에 해당하는 계정이 없습니다').waitFor();
+step('소유자 계정이 없으면 설정을 시작하지 않는다');
+
+await createOwner();
 await page.getByLabel('설정 코드').fill('wrong-code');
 await page.getByRole('button', { name: '패스키 등록하고 시작' }).click();
 await page.getByText('설정 코드가 올바르지 않습니다.').waitFor();
@@ -187,8 +206,32 @@ const resetup = await page.request.post(`${BASE}/api/setup/options`, { data: { s
 assert.equal(resetup.status(), 409);
 step('쓴 복구 코드 재사용 불가, 설정 완료 후 재설정 불가');
 
+const users = await fetch(`${AUTH_API}/accounts:query`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' },
+  body: JSON.stringify({ returnUserInfo: true }),
+}).then((response) => response.json());
+assert.deepEqual(
+  users.userInfo.map((user) => user.localId),
+  [OWNER_UID],
+);
+step('여러 번 로그인해도 사용자는 Supplies 계정 하나뿐이다');
+
+// Supplies에서 구글로 로그인한 세션 흉내: 같은 계정이지만 패스키를 거치지 않았다.
+const suppliesLogin = await fetch(`http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=demo`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'owner@example.com', password: 'supplies-login', returnSecureToken: true }),
+}).then((response) => response.json());
+assert.equal(suppliesLogin.localId, OWNER_UID);
+const suppliesApi = await page.request.get(`${BASE}/api/security`, {
+  headers: { Authorization: `Bearer ${suppliesLogin.idToken}` },
+});
+assert.equal(suppliesApi.status(), 403);
+step('같은 계정이라도 패스키 없이 들어온 세션은 API에서 막힌다');
+
 // Firestore 규칙
-const unsigned = (uid) => {
+const unsigned = (uid, claims = {}) => {
   const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
   const now = Math.floor(Date.now() / 1000);
   const payload = {
@@ -200,19 +243,22 @@ const unsigned = (uid) => {
     exp: now + 3600,
     auth_time: now,
     firebase: { identities: {}, sign_in_provider: 'custom' },
+    ...claims,
   };
   return `${encode({ alg: 'none', typ: 'JWT' })}.${encode(payload)}.`;
 };
-const firestore = (path, uid) =>
-  fetch(`http://127.0.0.1:8080/v1/projects/demo-upboard/databases/(default)/documents/${path}`, {
-    headers: uid ? { Authorization: `Bearer ${unsigned(uid)}` } : {},
+const firestore = (path, uid, claims) =>
+  fetch(`http://127.0.0.1:8080/v1/projects/${PROJECT}/databases/${DATABASE}/documents/${path}`, {
+    headers: uid ? { Authorization: `Bearer ${unsigned(uid, claims)}` } : {},
   }).then((response) => response.status);
-assert.equal(await firestore('topics', 'owner'), 200);
+const owner = { upboard: true };
+assert.equal(await firestore('topics', OWNER_UID, owner), 200);
 assert.equal(await firestore('topics', null), 403);
+assert.equal(await firestore('topics', OWNER_UID), 403);
 assert.equal(await firestore('topics', 'someone-else'), 403);
-assert.equal(await firestore('authCredentials', 'owner'), 403);
-assert.equal(await firestore('auth/recovery', 'owner'), 403);
-step('Firestore 규칙: 본인만 토픽 접근, 인증 데이터는 누구도 직접 접근 불가');
+assert.equal(await firestore('authCredentials', OWNER_UID, owner), 403);
+assert.equal(await firestore('auth/recovery', OWNER_UID, owner), 403);
+step('Firestore 규칙: 패스키로 들어온 세션만 토픽 접근, 인증 데이터는 누구도 직접 접근 불가');
 
 await browser.close();
 console.log('\n전체 통과');

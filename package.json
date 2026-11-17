@@ -5,7 +5,7 @@
     "build": "npm --prefix functions run build && npm --prefix web run build",
     "emulators": "firebase emulators:start --project demo-upboard",
     "test:e2e": "node e2e/run.mjs",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy --only hosting:upboard,functions:up-board,firestore"
   },
   "devDependencies": {
     "firebase-tools": "^15.36.0"
