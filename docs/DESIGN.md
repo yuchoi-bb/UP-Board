@@ -28,16 +28,25 @@ Firestore 구조:
 
 ```
 topics/{topicId}
-  title, content, links[], parentId, order, createdAt, updatedAt
+  title, content, links[{label, url}], parentId, order,
+  createdAt, updatedAt, updatedBy("me" | "ai"), updatedSummary, turnId, deletedAt
 topics/{topicId}/versions/{versionId}
-  title, content, links[], author("me" | "ai"), turnId, summary, createdAt
+  title, content, links[], author("me" | "ai"), summary, turnId,
+  createdAt(그 상태가 만들어진 시각), archivedAt(이력으로 밀려난 시각)
 ```
+
+인증 데이터(`auth/*`, `authCredentials`, `authChallenges`)는 Firestore 규칙으로 전부 막고
+Functions의 Admin SDK로만 다룬다.
 
 ## 로그인
 
 ### 모바일
 
 패스키로 지문 로그인한다. Functions가 WebAuthn 검증을 하고 Firebase 커스텀 토큰을 발급한다.
+계정은 고정 UID `owner` 하나뿐이다.
+
+첫 패스키 등록은 배포할 때 정한 설정 코드(`SETUP_CODE`)를 알아야만 할 수 있다.
+주소를 먼저 알아낸 남이 사이트를 차지하지 못하게 하기 위한 것으로, 설정이 끝나면 다시 쓸 수 없다.
 
 ### PC
 

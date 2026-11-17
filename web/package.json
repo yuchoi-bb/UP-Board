@@ -1,0 +1,26 @@
+{
+  "name": "up-board-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --mode emulator",
+    "build": "tsc --noEmit && vite build",
+    "build:emulator": "tsc --noEmit && vite build --mode emulator"
+  },
+  "dependencies": {
+    "@simplewebauthn/browser": "^14.0.0",
+    "firebase": "^13.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^7.18.5",
+    "remark-gfm": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "typescript": "^5.9.0",
+    "vite": "^8.3.8"
+  }
+}

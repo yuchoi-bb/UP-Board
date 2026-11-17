@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner() {
+      return request.auth != null && request.auth.uid == 'owner';
+    }
+
+    match /topics/{topicId} {
+      allow read, write: if isOwner();
+
+      match /versions/{versionId} {
+        allow read, write: if isOwner();
+      }
+    }
+
+    // 인증 관련 컬렉션(패스키, 챌린지, 복구 코드)은 Functions의 Admin SDK로만 접근한다.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
