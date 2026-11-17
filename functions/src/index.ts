@@ -25,7 +25,16 @@ type Route = { auth: boolean; handler: (body: Record<string, unknown>) => Promis
  */
 async function token(): Promise<string> {
   await assertOwnerExists();
-  return getAuth().createCustomToken(ownerUid(), { [OWNER_CLAIM]: true });
+  return getAuth()
+    .createCustomToken(ownerUid(), { [OWNER_CLAIM]: true })
+    .catch((error: unknown) => {
+      logger.error('custom token signing failed', error);
+      throw new HttpError(
+        500,
+        'token_failed',
+        "로그인 토큰을 만들지 못했습니다. Functions 서비스 계정에 '서비스 계정 토큰 생성자' 권한이 있는지 확인하세요.",
+      );
+    });
 }
 
 async function assertOwnerExists(): Promise<void> {
@@ -53,8 +62,9 @@ const routes: Record<string, Route> = {
       if (await isInitialized()) {
         throw new HttpError(409, 'already_initialized', '이미 설정이 끝난 사이트입니다.');
       }
-      // 설정이 저장된 뒤에 계정 문제를 발견하면 복구 코드만 날아가므로, 시작 전에 확인한다.
-      await assertOwnerExists();
+      // 설정이 저장된 뒤에 계정·서명 문제를 발견하면 복구 코드만 날아가므로, 지문을 대기 전에
+      // 토큰을 한 번 만들어 본다.
+      await token();
       const expected = SETUP_CODE.value();
       if (!expected) throw new HttpError(500, 'not_configured', 'SETUP_CODE가 설정되지 않았습니다.');
       await assertNotThrottled();
@@ -68,13 +78,15 @@ const routes: Record<string, Route> = {
   'POST /api/setup/verify': {
     auth: false,
     handler: async (body) => {
+      // 패스키를 저장하기 전에 토큰부터 만든다. 저장 뒤에 실패하면 복구 코드를 보여줄 수 없다.
+      const signed = await token();
       const passkey = await verifyRegistration(
         'setup',
         requireString(body.challengeId, 'challengeId'),
         body.response as never,
         passkeyName(body),
       );
-      return { passkey, recoveryCodes: await issueRecoveryCodes(), token: await token() };
+      return { passkey, recoveryCodes: await issueRecoveryCodes(), token: signed };
     },
   },
 

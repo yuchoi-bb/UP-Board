@@ -45,9 +45,18 @@ Supplies가 쓰는 기본 데이터베이스와 그 규칙은 건드리지 않�
 ### 로그인할 때 서버 오류가 나면
 
 - `OWNER_UID에 해당하는 계정이 없습니다`: `functions/.env.up-wishlist`의 UID가 틀렸다. 고치고 다시 배포한다.
-- Functions 로그에 `iam.serviceAccounts.signBlob` 권한 오류: Functions가 로그인 토큰에 서명할 권한이 없는 것이다.
-  Google Cloud 콘솔의 IAM에서 Functions 실행 서비스 계정(`<프로젝트번호>-compute@developer.gserviceaccount.com`)에
-  **서비스 계정 토큰 생성자** 역할을 추가한다.
+- `로그인 토큰을 만들지 못했습니다`: Functions가 로그인 토큰에 서명할 권한이 없는 것이다. Cloud Shell에서:
+
+  ```sh
+  gcloud services enable iamcredentials.googleapis.com --project up-wishlist
+  gcloud iam service-accounts add-iam-policy-binding 860927554139-compute@developer.gserviceaccount.com \
+    --project up-wishlist \
+    --member=serviceAccount:860927554139-compute@developer.gserviceaccount.com \
+    --role=roles/iam.serviceAccountTokenCreator
+  ```
+
+  권한이 반영되기까지 몇 분 걸릴 수 있다.
+- 원인을 모르는 서버 오류: `npx firebase functions:log --only upboardApi`로 로그를 본다.
 - 화면이 Firebase에 연결하지 못하면: Google Cloud 콘솔의 사용자 인증 정보에서 브라우저 API 키에
   HTTP 리퍼러 제한이 걸려 있는지 보고, 걸려 있으면 `up-board1216.web.app`을 추가한다.
 
