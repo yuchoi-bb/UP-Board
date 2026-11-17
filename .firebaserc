@@ -5,7 +5,7 @@
   "targets": {
     "up-wishlist": {
       "hosting": {
-        "upboard": ["up-board"]
+        "upboard": ["up-board1216"]
       }
     },
     "demo-upboard": {

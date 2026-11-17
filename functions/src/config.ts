@@ -18,7 +18,7 @@ const OWNER_UID = defineString('OWNER_UID');
 export const SETUP_CODE = defineSecret('SETUP_CODE');
 
 /** 패스키가 묶일 도메인. 바꾸면 등록한 패스키가 전부 무효가 된다. */
-const RP_ID = defineString('RP_ID', { default: 'up-board.web.app' });
+const RP_ID = defineString('RP_ID', { default: 'up-board1216.web.app' });
 
 export const isEmulator = process.env.FUNCTIONS_EMULATOR === 'true';
 

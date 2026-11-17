@@ -31,7 +31,7 @@ env -u HTTPS_PROXY -u https_proxy -u GLOBAL_AGENT_HTTPS_PROXY npx firebase emula
 ## 건드리면 안 되는 것
 
 - 패스키는 도메인(rpID)에 묶인다. `RP_ID`나 호스팅 도메인을 바꾸면 등록된 지문이 전부 무효가 된다.
-- Firebase 프로젝트 `up-wishlist`를 Supplies 앱과 같이 쓴다. UP-Board 몫은 Hosting 사이트 `up-board`,
+- Firebase 프로젝트 `up-wishlist`를 Supplies 앱과 같이 쓴다. UP-Board 몫은 Hosting 사이트 `up-board1216`,
   Firestore 데이터베이스 `up-board`, Functions 코드베이스 `up-board`로 분리돼 있다.
   `firebase.json`에 기본 데이터베이스를 넣거나 배포 범위(`npm run deploy`의 `--only`)를 넓히면
   Supplies의 규칙·데이터를 덮어쓸 수 있다.

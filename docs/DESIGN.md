@@ -9,7 +9,7 @@
 | --- | --- |
 | 저장소 | `UP-Board` |
 | 호스팅·백엔드 | Firebase 프로젝트 `up-wishlist` (Supplies 앱과 같이 씀) |
-| 도메인 | `up-board.web.app` (같은 프로젝트 안의 별도 Hosting 사이트) |
+| 도메인 | `up-board1216.web.app` (같은 프로젝트 안의 별도 Hosting 사이트) |
 | 계정 | Supplies 앱의 구글 계정과 같은 사용자 |
 | 로그인(모바일) | 패스키(WebAuthn) 지문 |
 | 로그인(PC) | FavHub 앱으로 푸시 → 지문 승인 |
@@ -23,7 +23,7 @@
 
 | 자원 | UP-Board | Supplies |
 | --- | --- | --- |
-| Hosting | 사이트 `up-board` | GitHub Pages (Firebase Hosting 안 씀) |
+| Hosting | 사이트 `up-board1216` | GitHub Pages (Firebase Hosting 안 씀) |
 | Firestore | 데이터베이스 `up-board` (서울) | 기본 데이터베이스 `(default)` |
 | Firestore 규칙 | 이 저장소의 `firestore.rules` | 콘솔에서 관리 |
 | Functions | 코드베이스 `up-board`, 함수 `upboardApi` | 없음 |
@@ -128,6 +128,6 @@ Gemini가 토픽을 직접 고치므로, 모든 수정은 되돌릴 수 있어�
 ## 시작 전 필요한 것
 
 - `up-wishlist` 프로젝트의 Blaze(종량제) 요금제 확인
-- Hosting 사이트 `up-board` 생성, Supplies 구글 계정의 UID 확인 (README 참고)
+- Hosting 사이트 `up-board1216` 생성, Supplies 구글 계정의 UID 확인 (README 참고)
 - 배포용 Firebase 자격 증명 (또는 배포는 직접 수행)
 - Gemini API 키 (3단계)

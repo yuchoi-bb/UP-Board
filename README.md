@@ -20,7 +20,7 @@ Firebase 콘솔에서 한 번만 하면 되는 준비:
 
 1. `up-wishlist`의 요금제가 **Blaze**인지 확인한다. (Functions 배포에 필요. 개인 사용량이면 요금은 거의 나오지 않는다.)
 2. **Authentication → Users**에서 Supplies 앱에 로그인할 때 쓰는 구글 계정 행의 **사용자 UID**를 복사해 둔다.
-3. 프로젝트 설정에서 **웹 앱**을 하나 더 등록하고(이름 예: UP-Board), 아래에서 만들 `up-board` Hosting 사이트에 연결한다.
+3. 프로젝트 설정에서 **웹 앱**을 하나 더 등록하고(이름 예: UP-Board), 아래에서 만들 `up-board1216` Hosting 사이트에 연결한다.
    Hosting이 이 앱의 설정값을 사이트에 자동으로 내려준다.
 
 그다음 터미널에서 저장소를 받고, **저장소 폴더 안에서** 나머지 명령을 실행한다:
@@ -30,7 +30,7 @@ git clone https://github.com/yuchoi-bb/UP-Board.git
 cd UP-Board
 npm install && npm --prefix functions install && npm --prefix web install
 npx firebase login
-npx firebase hosting:sites:create up-board          # 이름이 이미 쓰이고 있으면 알려 달라
+npx firebase hosting:sites:create up-board1216      # 이미 만들었으면 건너뛴다
 echo "OWNER_UID=<복사한 UID>" > functions/.env.up-wishlist
 npx firebase functions:secrets:set SETUP_CODE       # 첫 패스키 등록 때 입력할 코드. 길게 정한다
 npm run deploy
@@ -39,7 +39,7 @@ npm run deploy
 첫 배포 때 Firestore 데이터베이스 `up-board`가 서울(`asia-northeast3`)에 자동으로 만들어진다.
 Supplies가 쓰는 기본 데이터베이스와 그 규칙은 건드리지 않는다.
 
-배포가 끝나면 **폰에서** `https://up-board.web.app`을 열고, 설정 코드를 입력해 지문을 등록한다.
+배포가 끝나면 **폰에서** `https://up-board1216.web.app`을 열고, 설정 코드를 입력해 지문을 등록한다.
 이때 보여주는 복구 코드 10개는 다시 볼 수 없으니 반드시 저장해 둔다.
 
 ### 로그인할 때 서버 오류가 나면
@@ -49,7 +49,7 @@ Supplies가 쓰는 기본 데이터베이스와 그 규칙은 건드리지 않�
   Google Cloud 콘솔의 IAM에서 Functions 실행 서비스 계정(`<프로젝트번호>-compute@developer.gserviceaccount.com`)에
   **서비스 계정 토큰 생성자** 역할을 추가한다.
 - 화면이 Firebase에 연결하지 못하면: Google Cloud 콘솔의 사용자 인증 정보에서 브라우저 API 키에
-  HTTP 리퍼러 제한이 걸려 있는지 보고, 걸려 있으면 `up-board.web.app`을 추가한다.
+  HTTP 리퍼러 제한이 걸려 있는지 보고, 걸려 있으면 `up-board1216.web.app`을 추가한다.
 
 ### 도메인을 바꿀 때
 
