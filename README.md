@@ -23,9 +23,11 @@ Firebase 콘솔에서 한 번만 하면 되는 준비:
 3. 프로젝트 설정에서 **웹 앱**을 하나 더 등록하고(이름 예: UP-Board), 아래에서 만들 `up-board` Hosting 사이트에 연결한다.
    Hosting이 이 앱의 설정값을 사이트에 자동으로 내려준다.
 
-그다음 이 저장소에서:
+그다음 터미널에서 저장소를 받고, **저장소 폴더 안에서** 나머지 명령을 실행한다:
 
 ```sh
+git clone https://github.com/yuchoi-bb/UP-Board.git
+cd UP-Board
 npm install && npm --prefix functions install && npm --prefix web install
 npx firebase login
 npx firebase hosting:sites:create up-board          # 이름이 이미 쓰이고 있으면 알려 달라
